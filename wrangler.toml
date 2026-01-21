@@ -1,0 +1,67 @@
+name = "ip-check"
+main = "src/index.ts"
+compatibility_date = "2026-01-20"
+
+# Serve static assets from frontend build
+[assets]
+directory = "./frontend/dist"
+binding = "ASSETS"
+
+[vars]
+# 环境标识 (development/production)
+ENVIRONMENT = "production"
+# 允许的 CORS 来源（逗号分隔，支持通配符）
+# 示例: *.sfun.ip-ddns.com 会匹配 v4.sfun.ip-ddns.com 和 v6.sfun.ip-ddns.com
+ALLOWED_ORIGINS = "*.sfun.ip-ddns.com"
+# 调试端点密钥（生产环境需要此密钥才能访问 /api/debug/config）
+# 注意：/config 与 /api/config 端点（仅包含 hosts/timeouts）无需认证
+# DEBUG_KEY = "your-secure-debug-key"
+
+# 缓存配置
+# IP 查询结果（合并缓存）和 AI 分析的缓存过期时间（秒）
+# 说明：
+# - 该值同时影响：
+#   - 合并后的 IP 数据 KV 缓存（core/batchCheck.ts）
+#   - AI 分析结果 KV 缓存（routes/check.ts、routes/ai.ts）
+# - 默认 900 秒（15 分钟），最小 60 秒（小于 60 或无效会回落到默认值）
+CACHE_TTL_SECONDS = "7200"
+
+# 超时配置（毫秒）
+# 后端 API 请求超时（IPQS、AbuseIPDB 等数据源），默认 5000ms，最小 1000ms
+API_TIMEOUT_MS = "5000"
+# 前端出口检测请求超时，默认 5000ms
+FRONTEND_TIMEOUT_MS = "2000"
+# 前端连通性检测超时，默认 5000ms
+CONNECTIVITY_TIMEOUT_MS = "5000"
+
+# API 密钥 - 支持多 Key（逗号分隔），启用智能轮询 + 故障转移
+# 示例: IPQS_KEY = "key1,key2,key3"
+# 注意：敏感密钥请通过 GitHub Secrets 或 wrangler secret put 设置
+# IPQS_KEY = ""
+# ABUSEIPDB_KEY = ""
+# IP2LOCATION_KEY = ""
+# IPINFO_TOKEN = ""
+# CLOUDFLARE_API_TOKEN = ""  # Cloudflare API Token（用于 Radar）
+
+# LLM 配置
+# LLM_API_KEY = ""
+# LLM_BASE_URL = ""
+# LLM_MODEL = ""
+
+# 出口检测，至少设置一个
+IPV4_HOST = "v4.sfun.ip-ddns.com"
+IPV6_HOST = "v6.sfun.ip-ddns.com"
+# CFV4_HOST = ""
+# CFV6_HOST = ""
+# HE_HOST = ""
+
+[[kv_namespaces]]
+binding = "IP_CACHE"
+id = "${KV_NAMESPACE_ID}"
+
+# Cloudflare Rate Limiting (Rate Limit binding)
+# 每个 IP 每 60 秒最多 60 次请求
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }
